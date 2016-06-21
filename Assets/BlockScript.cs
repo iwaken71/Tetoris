@@ -3,7 +3,7 @@ using System.Collections;
 
 public class BlockScript : MonoBehaviour {
 
-	bool move,left,right;
+	bool move,left,right,down;
 	GameObject[] child;
 	public int id;
 
@@ -12,6 +12,7 @@ public class BlockScript : MonoBehaviour {
 		move = true;
 		left = true;
 		right = true;
+		down = true;
 		child = new GameObject[transform.childCount];
 		for (int i = 0; i < transform.childCount; i++) {
 			child [i] = transform.GetChild (i).gameObject;
@@ -19,7 +20,7 @@ public class BlockScript : MonoBehaviour {
 	}
 
 
-	
+
 	// Update is called once per frame
 	void Update () {
 		LeftCheck ();
@@ -27,17 +28,31 @@ public class BlockScript : MonoBehaviour {
 		DownCheck ();
 		if (Input.GetKeyDown (KeyCode.DownArrow)) {
 			if (move) {
-				transform.position += Vector3.back;
+				if (down) {
+					DownMove ();
+				} else {
+					move = false;
+					GameManager.instance.NewBlock ();
+					for (int i = 0; i < transform.childCount; i++) {
+						Vector3 vec = child [i].transform.position;
+						GameManager.instance.SetBlock (vec.x,vec.z);
+					}
+					GameManager.instance.DeleteCheck ();
+					Destroy (this.gameObject);
+
+				}
 			}
 		}
+
 		if (Input.GetKeyDown (KeyCode.LeftArrow)) {
 			if (move && left) {
-				transform.position += Vector3.left;
+				LeftMove ();
+
 			}
 		}
 		if (Input.GetKeyDown (KeyCode.RightArrow)) {
 			if (move && right) {
-				transform.position += Vector3.right;
+				RightMove ();
 			}
 		}
 		if (Input.GetKeyDown (KeyCode.X)) {
@@ -62,13 +77,14 @@ public class BlockScript : MonoBehaviour {
 		}
 	}
 
+
 	void LeftCheck(){
 
 		bool check = true;
 		for (int i = 0; i < transform.childCount; i++) {
 			Ray ray = new Ray (child [i].transform.position, Vector3.left);
 			RaycastHit hit;
-			float distance = child [i].transform.localScale.x / 2;
+			float distance = child [i].transform.localScale.x / 2+ 0.05f;
 			if (Physics.Raycast (ray, out hit, distance)) {
 				if (hit.collider.tag == "Block") {
 					int tmp = hit.collider.GetComponent<BlockScript> ().id;
@@ -90,7 +106,7 @@ public class BlockScript : MonoBehaviour {
 		for (int i = 0; i < transform.childCount; i++) {
 			Ray ray = new Ray (child [i].transform.position, Vector3.right);
 			RaycastHit hit;
-			float distance = child [i].transform.localScale.x / 2;
+			float distance = child [i].transform.localScale.x / 2+ 0.05f;
 			if (Physics.Raycast (ray, out hit, distance)) {
 				if (hit.collider.tag == "Block") {
 					int tmp = hit.collider.GetComponent<BlockScript> ().id;
@@ -109,7 +125,7 @@ public class BlockScript : MonoBehaviour {
 
 	void Fix(){
 		for (int i = 0; i < transform.childCount; i++) {
-			if (child [i].transform.position.x >= 10) {
+			if (child [i].transform.position.x >= GameManager.instance.width) {
 				transform.position += Vector3.left;
 				Fix ();
 			}
@@ -117,6 +133,12 @@ public class BlockScript : MonoBehaviour {
 		for (int i = 0; i < transform.childCount; i++) {
 			if (child [i].transform.position.x <= -1) {
 				transform.position += Vector3.right;
+				Fix ();
+			}
+		}
+		for (int i = 0; i < transform.childCount; i++) {
+			if (child [i].transform.position.y <= -1) {
+				transform.position += Vector3.forward;
 				Fix ();
 			}
 		}
@@ -129,7 +151,7 @@ public class BlockScript : MonoBehaviour {
 			for (int i = 0; i < transform.childCount; i++) {
 				Ray ray = new Ray (child [i].transform.position, Vector3.back);
 				RaycastHit hit;
-				float distance = child [i].transform.localScale.z / 2;
+				float distance = child [i].transform.localScale.z / 2 + 0.05f;
 				if (Physics.Raycast (ray, out hit, distance)) {
 					if (hit.collider.tag == "Block") {
 						int tmp = hit.collider.GetComponent<BlockScript> ().id;
@@ -144,17 +166,7 @@ public class BlockScript : MonoBehaviour {
 					}
 				}
 			}
-			move = check;
-			if (!move) {
-				GameManager.instance.NewBlock ();
-				for (int i = 0; i < transform.childCount; i++) {
-					Vector3 vec = child [i].transform.position;
-
-					GameManager.instance.SetBlock (vec.x,vec.z);
-					Destroy (this.gameObject);
-				}
-
-			}
+			down = check;
 		}
 
 	}
@@ -162,6 +174,19 @@ public class BlockScript : MonoBehaviour {
 	public void SetId(int input){
 		id = input;
 	}
+
+	void LeftMove(){
+		transform.position += Vector3.left;
+		Fix ();
+	}
+	void RightMove(){
+		transform.position += Vector3.right;
+		Fix ();
+	}
+	void DownMove(){
+		transform.position += Vector3.back;
+		Fix ();
+	} 
 
 
 }
