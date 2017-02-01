@@ -17,63 +17,24 @@ public class BlockScript : MonoBehaviour {
 		for (int i = 0; i < transform.childCount; i++) {
 			child [i] = transform.GetChild (i).gameObject;
 		}
+		InvokeRepeating ("DownMove", 0.75f, 0.75f);
 	}
 
 
 
 	// Update is called once per frame
 	void Update () {
-		LeftCheck ();
-		RightCheck ();
-		DownCheck ();
 		if (Input.GetKeyDown (KeyCode.DownArrow)) {
-			if (move) {
-				if (down) {
-					DownMove ();
-				} else {
-					move = false;
-					GameManager.instance.NewBlock ();
-					for (int i = 0; i < transform.childCount; i++) {
-						Vector3 vec = child [i].transform.position;
-						GameManager.instance.SetBlock (vec.x,vec.z);
-					}
-					GameManager.instance.DeleteCheck ();
-					Destroy (this.gameObject);
-
-				}
-			}
+			DownMove ();
 		}
-
 		if (Input.GetKeyDown (KeyCode.LeftArrow)) {
-			if (move && left) {
-				LeftMove ();
-
-			}
+			LeftMove ();
 		}
 		if (Input.GetKeyDown (KeyCode.RightArrow)) {
-			if (move && right) {
-				RightMove ();
-			}
+			RightMove ();
 		}
-		if (Input.GetKeyDown (KeyCode.X)) {
-			if (move) {
-				Vector3 tmp1 = transform.position;
-				Quaternion tmp2 = transform.rotation;
-				transform.Rotate (new Vector3(0,90,0));
-				Fix ();
-				bool check = true;
-				for (int i = 0; i < transform.childCount; i++) {
-					Vector3 vec = child [i].transform.position;
-					if (GameManager.instance.isBlock (vec.x, vec.z)) {
-						check = false;
-						break;
-					}
-				}
-				if (!check) {
-					transform.position = tmp1;
-					transform.rotation = tmp2;
-				}
-			}
+		if (Input.GetKeyDown (KeyCode.UpArrow)) {
+			Rotate1 ();
 		}
 	}
 
@@ -137,15 +98,15 @@ public class BlockScript : MonoBehaviour {
 			}
 		}
 		for (int i = 0; i < transform.childCount; i++) {
-			if (child [i].transform.position.y <= -1) {
+			if (child [i].transform.position.z <= -1) {
 				transform.position += Vector3.forward;
 				Fix ();
 			}
 		}
-
 	}
 
 	void DownCheck(){
+		
 		if (move) {
 			bool check = true;
 			for (int i = 0; i < transform.childCount; i++) {
@@ -176,17 +137,62 @@ public class BlockScript : MonoBehaviour {
 	}
 
 	void LeftMove(){
-		transform.position += Vector3.left;
-		Fix ();
+		LeftCheck ();
+		if (move && left) {
+			transform.position += Vector3.left;
+			Fix ();
+		}
 	}
 	void RightMove(){
-		transform.position += Vector3.right;
-		Fix ();
+		RightCheck ();
+		if (move && right) {
+			transform.position += Vector3.right;
+			Fix ();
+		}
 	}
 	void DownMove(){
-		transform.position += Vector3.back;
-		Fix ();
+		DownCheck ();
+		if (move) {
+			if (down) {
+				transform.position += Vector3.back;
+				Fix ();
+			} else {
+				Stop ();
+			}
+		}
 	} 
+
+	void Rotate1(){
+		if (move) {
+			Vector3 tmp1 = transform.position;
+			Quaternion tmp2 = transform.rotation;
+			transform.Rotate (new Vector3(0,90,0));
+			Fix ();
+			bool check = true;
+			for (int i = 0; i < transform.childCount; i++) {
+				Vector3 vec = child [i].transform.position;
+				if (GameManager.instance.isBlock (vec.x, vec.z)) {
+					check = false;
+					break;
+				}
+			}
+			if (!check) {
+				transform.position = tmp1;
+				transform.rotation = tmp2;
+			}
+		}
+
+	}
+	void Stop(){
+		move = false;
+		GameManager.instance.NewBlock ();
+		for (int i = 0; i < transform.childCount; i++) {
+			Vector3 vec = child [i].transform.position;
+			GameManager.instance.SetBlock (vec.x,vec.z);
+		}
+		GameManager.instance.DeleteCheck ();
+		Destroy (this.gameObject);
+	}
 
 
 }
